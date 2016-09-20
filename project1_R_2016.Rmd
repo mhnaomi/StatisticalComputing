@@ -1,0 +1,237 @@
+---
+title: "Project 1"
+author: "Menghan Hu"
+date: "September 14, 2016"
+output:
+  html_document
+---
+
+<style type="text/css">
+.table {
+
+    width: 80%;
+    margin-left:10%; 
+    margin-right:10%;
+}
+</style>
+
+*Their are 2 goals for this in class project today:*
+
+1. To practice dealing with vectors and matrices in R.
+2. To get an initial taste into webscraping and datafrom construction. 
+
+*In the first part of this porject you will focus on some basic vector and matrix creations and discuss what you see with them.*
+
+*In the second part we will scrape a number of different data elements from and earthquake database to create one large data frome. From there we will practice working with dataframes.*
+
+*Each answer must be supported by the code used to find it. Any explanations given must be in complete sentences. Please include your group members names on your project.*
+
+*You can download the R Markdown file for this project here:* [Project 1]()
+
+---
+
+
+#Part 1: Vectors and Matrices in R
+
+## Background
+
+The exponential distribution is defined by its cumulative distribution function
+$$F(x) = 1-e^{-\lambda x}$$
+
+The R function ***rexp()*** generates random variables with an exponential distribution. For example 
+<center>**rexp(n=10, rate=5)** </center>
+
+results in 10 exponentially distributed numbers with a rate $\lambda=5$. If you leave out the 5 and just have
+<center>**rexp(n=10)** </center>
+then this results in 10 exponentially distributed numbers with a rate $\lambda=1$, this is also referred to as the "standard exponential distribution". 
+
+## Large Scale Exponential Distribution
+
+1. R's capacity for data and computation is large to what was available 10 years ago. 
+    a. To show this, generate 1.1 million numbers from the standard exponential distribution and store them in a vector called `big.exp.draws.1`. Calculate the mean and standard deviation.
+    
+```{r}
+big.exp.draws.1 <- rexp(n = 1100000)
+mean(big.exp.draws.1)
+sd(big.exp.draws.1)
+
+```
+
+    
+    b. Plot a histogram of `big.exp.draws.1`.  Does it match the function $1-e^{-x}$?  Should it? 
+```{r}
+hist(big.exp.draws.1)
+
+```
+Yes, it matches the function. 
+
+    
+    c. Find the mean of all of the entries in `big.exp.draws.1` which are strictly greater than 1. You may need to first create a new vector to identify which elements satisfy this.
+```{r}
+mean(big.exp.draws.1[big.exp.draws.1 > 1])
+
+```
+
+    d. Create a matrix, `big.exp.draws.1.mat`, containing the the values in 
+`big.exp.draws.1`, with 1100 rows and 1000 columns. Use this matrix as the input to the `hist()` function and save the result to a variable of your choice. What happens to your data?
+
+```{r}
+big.exp.draws.1.mat <- matrix(big.exp.draws.1, nrow = 1100)
+
+hist(big.exp.draws.1.mat)
+
+```
+
+    e. Calculate the mean of the 371st column of `big.exp.draws.1.mat`.
+```{r}
+mean(big.exp.draws.1.mat[, 371])
+```
+    
+    f. Now, find the means of all 1000 columns of `big.exp.draws.1.mat` simultaneously. Plot the histogram of column means.  Explain why its shape does not match the histogram in problem 5b).
+    
+```{r}
+means.col <- apply(big.exp.draws.1.mat,2, mean)
+hist(means.col)
+
+```
+
+    g. Take the square of each number in `big.exp.draws.1`, and find the mean of this new vector.  Explain this in terms of the mean and standard deviation of `big.exp.draws.1`. ***Hint:*** think carefully about the formula R uses to calculate the standard deviation.
+
+```{r}
+big.exp.draws.1.sq <- big.exp.draws.1^2
+mean(big.exp.draws.1.sq)
+sd(big.exp.draws.1.sq)
+```
+
+
+# Part 2: Characters, Strings and Data Frames. 
+
+## Background
+
+This part of the lab will focus on a webpage from the [Advanced National Seismic System](http://earthquake.usgs.gov/monitoring/anss/). This is a site that contains all information on any recorded earthquake in the entire world from 1898 to present. 
+
+Earthquake file:
+
+- https://drive.google.com/uc?export=download&id=0B8CsRLdwqzbzZEgzQkxxY2xZNGM
+
+
+1. Use the `readLines()` function to read this in as a file.
+```{r}
+#setwd("C:/Users/Menghan Hu/Google Drive/Brown/Year3/PHP2560 Statistical Computing")
+setwd("~/GoogleDrive/Brown/Year3/PHP2560 Statistical Computing/Inclass Projects")
+earthquake.data <- readLines( file("earthquakes_09_16.html"))
+
+```
+
+2. How many lines of data are in this? 
+```{r}
+length(earthquake.data)
+```
+
+
+3. Use the indexing to find the following (Included in beginning lines of data):
+    a. What magnitude of earthquakes are included? 
+```{r}
+earthquake.data[5:6]
+```
+from 6 to 10.
+    
+    b. What is the date range for this data?
+```{r}
+earthquake.data[3:4]
+
+```
+1800/01/01 to 2016/09/14.
+
+
+4. Use the notes from class and find all of the latitudes and longitudes and save these in a data frame called `lat.long`. 
+
+```{r}
+one.geo.coord <- paste("-?[0-9]+\\.[0-9]{4}")
+pair.geo.coords <- paste(rep(one.geo.coord,2), collapse = ",")
+
+have.coords <- grepl(x = earthquake.data, pattern = pair.geo.coords)
+coord.matches <- gregexpr(pattern = pair.geo.coords, text = earthquake.data[have.coords])
+coords <- regmatches(x = earthquake.data[have.coords], m = coord.matches)
+coords <- unlist(coords)
+coords.pairs <- strsplit(coords, ",")
+coords.pairs <- unlist(coords.pairs)
+lat.long <- data.frame(matrix(coords.pairs, ncol = 2, byrow = TRUE))
+names(lat.long) <- c("latitude", "longitude")
+
+```
+
+
+5. Find all of the dates and save these in a data frame called `date`.
+```{r}
+date.pattern <- paste("^([0-9]{4})/([0-9]{2})/([0-9]{2})")
+
+have.dates <- grepl(x = earthquake.data, pattern = date.pattern)
+dates.match <- gregexpr(pattern = date.pattern, text = earthquake.data[have.dates])
+dates <- regmatches(x = earthquake.data[have.dates], m = dates.match)
+dates <- unlist(dates)
+
+dates <- data.frame(matrix(dates, ncol = 1))
+names(dates) <- c("dates")
+```
+
+
+
+6. Find all of the magnitudes and and save these in a data frame called `magnitude`. When you do this you will find that after you use the `regmatches()` function that the lists returned have multiple items in them. This is due to the fact that magnitude data looks exactly like another type of number. Use the following code to help extract the magnitude from your lists:
+```{r, eval=FALSE}
+mag <- paste(",[0-9]?\\.[0-9]{2},\\w")
+
+have.mags <- grepl(x = earthquake.data, pattern = mag)
+mag.matches <- gregexpr(pattern = mag, text = earthquake.data[have.mags])
+
+mags <- regmatches(x = earthquake.data[have.mags], m = mag.matches)
+coords <- unlist(coords)
+ # I had mine set with 
+ # mags <- regmatches(x=anss[have.mag], m=mag.matches)
+ mags2 <- rep(NA, length(mags))
+    for (i in 1:length(mags) ){
+                l <- length(mags[[i]])
+                mags2[i] <- mags[[i]][l]
+          }
+```
+7. Find all of the event IDs and save these in a vector called `ids`. 
+8. Check the length of 5-7, this should match the number of rows in 4.
+9. With their being event names missing we need to create a new way to identify each event. 
+    a. Find all of the times and save these in a vector called times. 
+    b. Collapse the times into one character with just numbers and no punctuation (i.e. 18:36:00.00 = 18360000).
+    c. Collapse all the dates into one character with no punctuation. (i.e. 1898/06/29 = 18980629).
+    d. Join both the new collapsed data and time vectors into one long characer with no spaces. 
+    e. Name the rows of `lat.long` with this new vector. What happens when you try to do this?
+    f. Find the duplicate items and rename them so they are unique.
+    g. Now use the corrected `event.id` vector to name the rows of all the data frames that have been created.
+10. Merge this into one large data frame called `earthquakes`. 
+11. How many earthquakes do you have listed? 
+12. What is the date of the first eathquake? 
+13. What is the date of the earthquake(s) with the largest magnitude. 
+14. Generate a new column in `earthquakes` called `mag.cat`. This will be a categorized earthquake. 
+
+Category Name | Magnitude Range
+------------- | ---------------
+Moderate | 5-5.99
+Strong | 6-6.99
+Major | 7-7.99
+Great | 8+
+
+
+15. Create a table of earthquakes by magnitude category.
+16. What is the most common type of earthquake? Try and have R give this answer. Meaning have R give you the category name.
+17. Before we try to graph this. What type of data are `latitude` and `longitude` in this data? If its not numeric change it to numeric.         
+18. Create a color coded graph of the earthquakes by magnitude category. Meaning you want the lightest color point to represent a `Moderate` earthquake and the darkest point to represent a `Great` earthquake.
+19. Are there any patterns to where the earthquake categories fall? 
+20. We will use the `geosphere` package and the most recent maximum earthquake (The data only goes up to 10).
+    a. Use the help function to learn more about the `distGeo()` function. 
+    b. Use this function to find the distance of all the earthquakes in relation to this one, place this in a data column called `distance.to.max`. 
+    c. How many earthquakes are within 1 km of the most recent largest earthquake? 
+    d. Create a table of earthquakes within  1 km and classify them by magnitude category. 
+    e. Create a table of earthquakes within 1 km that happened within 10 years of the most recent largest and classify them by magnitude category. 
+    f. What is the location of the most recent largest earthquake? 
+21. We are at a latitude of 41.824192 and a longidute of -71.406912. How big was the closest earthquake to us? How long ago did this happen. 
+22. Use (http://www.latlong.net/) to find the latitude and longitude of your hometown. Then find out the closest earthquake to it and how long ago it was. 
+23. Could you scrape all of the data we did in question 4-7 at one time? Show how to do this. 
+
+
