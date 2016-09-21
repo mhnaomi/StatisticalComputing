@@ -168,46 +168,111 @@ date.pattern <- paste("^([0-9]{4})/([0-9]{2})/([0-9]{2})")
 
 have.dates <- grepl(x = earthquake.data, pattern = date.pattern)
 dates.match <- gregexpr(pattern = date.pattern, text = earthquake.data[have.dates])
-dates <- regmatches(x = earthquake.data[have.dates], m = dates.match)
-dates <- unlist(dates)
+date <- regmatches(x = earthquake.data[have.dates], m = dates.match)
+date <- unlist(date)
 
-dates <- data.frame(matrix(dates, ncol = 1))
-names(dates) <- c("dates")
+date <- data.frame(matrix(date, ncol = 1))
+names(date) <- c("date")
 ```
 
 
 
 6. Find all of the magnitudes and and save these in a data frame called `magnitude`. When you do this you will find that after you use the `regmatches()` function that the lists returned have multiple items in them. This is due to the fact that magnitude data looks exactly like another type of number. Use the following code to help extract the magnitude from your lists:
 ```{r, eval=FALSE}
-mag <- paste(",[0-9]?\\.[0-9]{2},\\w")
+mag <- paste(",[0-9]?\\.[0-9]{2},[A-Z]")
 
 have.mags <- grepl(x = earthquake.data, pattern = mag)
 mag.matches <- gregexpr(pattern = mag, text = earthquake.data[have.mags])
 
 mags <- regmatches(x = earthquake.data[have.mags], m = mag.matches)
-coords <- unlist(coords)
- # I had mine set with 
- # mags <- regmatches(x=anss[have.mag], m=mag.matches)
- mags2 <- rep(NA, length(mags))
+
+mags2 <- rep(NA, length(mags))
     for (i in 1:length(mags) ){
-                l <- length(mags[[i]])
-                mags2[i] <- mags[[i]][l]
+                mags2[i] <- substr(mags[[i]][1], 2,5)
           }
 ```
 7. Find all of the event IDs and save these in a vector called `ids`. 
+```{r}
+id.pattern <- paste(",[0-9]*$")
+
+have.ids <- grepl(x = earthquake.data, pattern = id.pattern)
+id.matches <- gregexpr(pattern = id.pattern, text = earthquake.data[have.ids])
+
+ids.list <- regmatches(x = earthquake.data[have.ids], m = id.matches)
+
+ids <- rep(NA, length(ids.list))
+for (i in 1:length(ids.list)){
+  ids[i] <- substr(ids.list[[i]][1], 2, nchar(ids.list[[i]][1]))
+  
+}
+
+
+```
+
 8. Check the length of 5-7, this should match the number of rows in 4.
+```{r}
+dim(date)
+length(mags2)
+length(ids)
+```
+
+
 9. With their being event names missing we need to create a new way to identify each event. 
     a. Find all of the times and save these in a vector called times. 
+```{r}
+time.pattern <- paste("([0-9]{2}):([0-9]{2}):([0-9]{2}).([0-9]{2})")
+
+have.times <- grepl(x = earthquake.data, pattern = time.pattern)
+times.match <- gregexpr(pattern = time.pattern, text = earthquake.data[have.times])
+time <- regmatches(x = earthquake.data[have.times], m = times.match)
+time <- unlist(time)
+
+```
+    
     b. Collapse the times into one character with just numbers and no punctuation (i.e. 18:36:00.00 = 18360000).
+
+```{r}
+time.np <- gsub("[[:punct:]]", "", time)
+```
     c. Collapse all the dates into one character with no punctuation. (i.e. 1898/06/29 = 18980629).
+```{r}
+dates <- as.vector(as.matrix(date))
+dates.np <- gsub("\\/", "", dates)
+
+```
     d. Join both the new collapsed data and time vectors into one long characer with no spaces. 
+```{r}
+date.time <- paste0(dates.np, time.np)
+```
+
     e. Name the rows of `lat.long` with this new vector. What happens when you try to do this?
+```{r}
+row.names(lat.long) <- date.time
+
+```
+
     f. Find the duplicate items and rename them so they are unique.
     g. Now use the corrected `event.id` vector to name the rows of all the data frames that have been created.
 10. Merge this into one large data frame called `earthquakes`. 
+
+```{r}
+earthquakes <- cbind(magnitude = as.numeric(mags2), lat.long, date = dates, time = time) 
+
+```
+
+
 11. How many earthquakes do you have listed? 
+```{r}
+dim(earthquakes)[1]
+```
 12. What is the date of the first eathquake? 
+```{r}
+earthquakes[1,"date"]
+```
 13. What is the date of the earthquake(s) with the largest magnitude. 
+```{r}
+earthquakes$date[which.max(earthquakes$magnitude)]
+```
 14. Generate a new column in `earthquakes` called `mag.cat`. This will be a categorized earthquake. 
 
 Category Name | Magnitude Range
@@ -216,11 +281,33 @@ Moderate | 5-5.99
 Strong | 6-6.99
 Major | 7-7.99
 Great | 8+
-
+```{r}
+earthquakes$mag.cat[earthquakes$magnitude >= 5 & earthquakes$magnitude <= 5.99] <- "Moderate"
+earthquakes$mag.cat[earthquakes$magnitude >= 6 & earthquakes$magnitude <= 6.99] <- "Strong"
+earthquakes$mag.cat[earthquakes$magnitude >= 7 & earthquakes$magnitude <= 7.99] <- "Major"
+earthquakes$mag.cat[earthquakes$magnitude >= 8 ] <- "Great"
+```
 
 15. Create a table of earthquakes by magnitude category.
+```{r}
+table(earthquakes$mag.cat)
+  
+```
+
 16. What is the most common type of earthquake? Try and have R give this answer. Meaning have R give you the category name.
-17. Before we try to graph this. What type of data are `latitude` and `longitude` in this data? If its not numeric change it to numeric.         
+```{r}
+freq.tb <- as.data.frame(table(earthquakes$mag.cat))
+freq.tb[which.max(freq.tb$Freq),1]
+```
+
+17. Before we try to graph this. What type of data are `latitude` and `longitude` in this data? If its not numeric change it to numeric.   
+
+They are factors.
+
+
+
+
+
 18. Create a color coded graph of the earthquakes by magnitude category. Meaning you want the lightest color point to represent a `Moderate` earthquake and the darkest point to represent a `Great` earthquake.
 19. Are there any patterns to where the earthquake categories fall? 
 20. We will use the `geosphere` package and the most recent maximum earthquake (The data only goes up to 10).
