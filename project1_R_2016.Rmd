@@ -117,7 +117,7 @@ Earthquake file:
 
 1. Use the `readLines()` function to read this in as a file.
 ```{r}
-#setwd("C:/Users/Menghan Hu/Google Drive/Brown/Year3/PHP2560 Statistical Computing")
+setwd("C:/Users/Menghan Hu/Google Drive/Brown/Year3/PHP2560 Statistical Computing/Inclass Projects")
 setwd("~/GoogleDrive/Brown/Year3/PHP2560 Statistical Computing/Inclass Projects")
 earthquake.data <- readLines( file("earthquakes_09_16.html"))
 
@@ -170,8 +170,9 @@ have.dates <- grepl(x = earthquake.data, pattern = date.pattern)
 dates.match <- gregexpr(pattern = date.pattern, text = earthquake.data[have.dates])
 date <- regmatches(x = earthquake.data[have.dates], m = dates.match)
 date <- unlist(date)
+#date <- as.Date(date)
 
-date <- data.frame(matrix(date, ncol = 1))
+date <- as.data.frame(matrix(date, ncol = 1))
 names(date) <- c("date")
 ```
 
@@ -179,7 +180,7 @@ names(date) <- c("date")
 
 6. Find all of the magnitudes and and save these in a data frame called `magnitude`. When you do this you will find that after you use the `regmatches()` function that the lists returned have multiple items in them. This is due to the fact that magnitude data looks exactly like another type of number. Use the following code to help extract the magnitude from your lists:
 ```{r, eval=FALSE}
-mag <- paste(",[0-9]?\\.[0-9]{2},[A-Z]")
+mag <- paste("[5-9]+\\.[0-9]{2}")
 
 have.mags <- grepl(x = earthquake.data, pattern = mag)
 mag.matches <- gregexpr(pattern = mag, text = earthquake.data[have.mags])
@@ -188,7 +189,8 @@ mags <- regmatches(x = earthquake.data[have.mags], m = mag.matches)
 
 mags2 <- rep(NA, length(mags))
     for (i in 1:length(mags) ){
-                mags2[i] <- substr(mags[[i]][1], 2,5)
+                l <- length(mags[[i]])
+                mags2[i] <- mags[[i]][l]
           }
 ```
 7. Find all of the event IDs and save these in a vector called `ids`. 
@@ -303,12 +305,22 @@ freq.tb[which.max(freq.tb$Freq),1]
 17. Before we try to graph this. What type of data are `latitude` and `longitude` in this data? If its not numeric change it to numeric.   
 
 They are factors.
-
-
+```{r}
+earthquakes$latitude <- as.numeric(paste(earthquakes$latitude))
+earthquakes$longitude <- as.numeric(paste(earthquakes$longitude))
+```
 
 
 
 18. Create a color coded graph of the earthquakes by magnitude category. Meaning you want the lightest color point to represent a `Moderate` earthquake and the darkest point to represent a `Great` earthquake.
+```{r}
+library(rworldmap)
+newmap <- getMap(resolution = "low")
+plot(newmap, xlim = c(-20, 59), ylim = c(35, 71), asp = 1)
+
+
+```
+
 19. Are there any patterns to where the earthquake categories fall? 
 20. We will use the `geosphere` package and the most recent maximum earthquake (The data only goes up to 10).
     a. Use the help function to learn more about the `distGeo()` function. 

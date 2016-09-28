@@ -1,0 +1,340 @@
+---
+title: "Project 3; Control Structures"
+author: "Menghan Hu, Shiyuan Miao, Altan Allawala "
+date: "September 28, 2016"
+output:
+  html_document
+---
+
+<style type="text/css">
+.table {
+
+    width: 80%;
+    margin-left:10%; 
+    margin-right:10%;
+}
+</style>
+
+
+
+
+
+
+#Project Goals:
+
+
+Our goal with this project is to start to practice loops. We will begin with some made up exercises and them move into real data cleaning. 
+
+
+
+# Part I:
+
+This part will contain some basic loops and control structures. You will have 1 hour to do this part and then we will present results and ideas of your code to the class. 
+
+### Question 1: Repeat for R and Julia.
+
+Using a loop, print the integers from 1 to 50. 
+
+```{r}
+for (i in seq(50)){
+  print(i)
+}
+```
+
+### Question 2: Repeat for R and Julia.
+
+A.  Using a loop, add all the integers between 0 and 1000.
+```{r}
+sum <- 0
+for (i in seq(0,1000,1)){
+  sum <- sum + i
+}
+sum
+```
+
+B. Now, add all the EVEN integers between 0 and 1000 (hint: use seq())
+```{r}
+sum <- 0
+for (i in seq(0,1000,2)){
+  sum <- sum + i
+}
+sum
+```
+
+C. Now, repeat A and B WITHOUT using a loop.
+```{r}
+sum(seq(0,1000,1))
+sum(seq(0,1000,2))
+```
+
+### Question 3: R Only
+
+Here is a dataframe of survey data containing 5 questions :
+
+```{r}
+survey <- data.frame(
+                     "participant" = c(1, 2, 3, 4, 5, 6),
+                     "q1" = c(5, 3, 2, 7, 11, 0),
+                     "q2" = c(4, 2, 2, 5, -10, 99),
+                     "q3" = c(-4, -3, 4, 2, 9, 10),
+                     "q4" = c(-30, 5, 2, 23, 4, 2),
+                     "q5" = c(88, 4, -20, 2, 4, 2)
+                     )
+```
+The response to each question should be an integer between 1 and 5. Obviously, we have some bad values in the dataframe. The goal of this problem is to fix them.
+
+A. Using a loop, create a new dataframe called survey.clean where all the invalid values (those that are not integers between 1 and 5) are set to NA.
+```{r}
+survey.clean <- survey
+for (i in 2:ncol(survey)){
+  survey.clean[,i][survey[,i]>5 | survey[,i]<1] <- NA
+}
+survey.clean
+```  
+
+
+
+B. Now, again using a loop, add a new column to the dataframe called “invalid.answers” that indicates, for each participant, how many bad answers they gave.
+```{r}
+invalid.answers <- c()
+for (j in 1:nrow(survey.clean)){
+  invalid.answers <- c(invalid.answers, sum(is.na(survey.clean[j,])))
+}
+survey.clean <- cbind(survey.clean, invalid.answers)
+survey.clean
+  
+```
+###Question 4: R Only
+
+Standardizing a variable means subtracting the mean, and then dividing by the standard deviation. Let’s use a loop to standardize the numeric columns in the [Western Collaborative Group Study](https://clinicaltrials.gov/ct2/show/NCT00005174). This study began in 1960 with 3154 men ages 39-59, who were employed in one of 11 California based companies. They were followed until 1969 during this time, 257 of these men developed coronary heart disease (CHD). You can read this data in with the code below. You can access this dataset with the following code:
+
+```{r}
+
+suppressMessages(library(foreign))
+wcgs <- read.dta("https://drive.google.com/uc?export=download&id=0B8CsRLdwqzbzYWxfN3ExQllBQkU")
+```
+
+The data has the following variables:
+
+
+WCGS has the following variables:
+
+-----------------------------------------------------------
+Name    Description
+------- -------------------------------------------
+id      Subject identification number
+
+age     Age in years
+
+height  Height in inches
+
+weight  Weight in lbs.
+
+sbp     Systolic blood pressure in mm 
+
+dbp     Diastolic blood pressure in mm Hg
+
+chol    Fasting serum cholesterol in mm 
+
+behpat  Behavior
+
+  1       A1
+
+  2       A2
+
+  3       B3
+
+  4       B4
+
+ncigs   Cigarettes per day
+
+dibpat  Behavior
+
+1       type A
+
+2       type B
+
+chd69   Coronary heart disease
+
+1       Yes
+
+0       no
+
+typechd Type of CHD
+
+1       myocardial infarction or death
+
+2       silent myocardial infarction
+
+3       angina perctoris
+
+time169 Time of CHD event or end of follow-up
+
+arcus   Arcus senilis
+
+0       absent
+
+1       present
+
+bmi     Body Mass Index
+-----------------------------------------------------------
+
+A. Create a function called standardize.me() that takes a numeric vector as an argument, and returns the standardized version of the vector. 
+
+```{r}
+standardize.me <- function(vec){
+  standardized.vec <- (vec - mean(vec, na.rm = T))/sd(vec, na.rm = T)
+  return(standardized.vec)
+}
+
+
+```
+
+B. Assign all the numeric columns of the original WCGS dataset to a new dataset called WCGS.new.
+```{r}
+WCGS.new <- wcgs[, c("age", "height", "weight", "sbp", "dbp", "chol", "ncigs", "bmi")]
+
+```
+
+
+C. Using a loop and your new function, standardize all the variables WCGS.new dataset.
+```{r}
+for (i in 1:ncol(WCGS.new)){
+  WCGS.new[, i] <- standardize.me(WCGS.new[, i])
+  
+}
+
+```
+
+
+D. What should the mean and standard deviation of all your new standardized variables be? Test your prediction by running a loop
+
+mean should be 0
+standard deviation should be 1
+
+```{r}
+for (i in 1:ncol(WCGS.new)){
+  print(paste("The mean is", mean(WCGS.new[, i], na.rm = T)))
+  print(paste("The sd is", sd(WCGS.new[, i], na.rm = T)))
+}
+```
+
+
+### Question 5: R Only
+
+A. Using a loop, calculate the mean weight of the subjects separated by the type of CHD they have.
+```{r}
+
+for (l in levels(wcgs$typchd69)){
+  print(paste("Mean weight of group ", l," is ", mean(wcgs$weight[wcgs$typchd69 == l], na.rm = T)))
+}
+
+```
+
+B. Now do the same thing, but now don’t use a loop
+```{r}
+mean(wcgs$weight[wcgs$typchd69 == "no CHD"], na.rm = T)
+mean(wcgs$weight[wcgs$typchd69 == "MI or SD"], na.rm = T)
+mean(wcgs$weight[wcgs$typchd69 == "silent MI"], na.rm = T)
+mean(wcgs$weight[wcgs$typchd69 == "angina"], na.rm = T)
+
+
+```
+# Part II. 
+
+
+An important part of working with Data is being able to access data from the internet and clean if for your purposes. This part of the project will be to learn how to use loops, controls and basic functions to clean data. 
+
+
+This data come from the Behavioral Risk Factor Surveillance System (BRFSS). This is a national health-related telephone survey. There are more than 400,000 interviews done every year from all 50 states and the district of Columbia. To learn more about this survey please go to their website: [Behavioral Risk Factor Surveillance System](http://www.cdc.gov/brfss/). 
+
+This will give everyone a chance to explore a very large, messy and real data set. The tools you will gain from this will be the knowledge of how to take a messy dataset, clean it. 
+
+
+* [Codebook](http://www.cdc.gov/brfss/annual_data/2015/pdf/codebook15_llcp.pdf)
+* [Data](https://www.cdc.gov/brfss/annual_data/2015/files/LLCP2015XPT.zip)
+* [Variable Layout](https://wwwdev.cdc.gov/brfss/annual_data/2015/llcp_varlayout_15_onecolumn.html)
+
+
+
+
+### Loading the Data
+
+1. Go to the webpage and download the SAS transport file. 
+2. Load this into R with:
+```
+library(foreign)
+setwd("C:/Users/Menghan Hu/Google Drive/Brown/Year3/PHP2560 Statistical Computing/Inclass Projects")
+# This is where mine is stored, you will have to change in for yours. 
+brfss.2015 <- read.xport("LLCP2015.xpt")
+```
+
+
+### Initial Steps
+
+1. One the data is loaded look at the head of the data. Notice that many covariate have a `X_` in front of them. Remove this. 
+```{r}
+x.pattern <- "^X_"
+
+have.x <- grepl(x = colnames(brfss.2015), pattern = x.pattern)
+
+names.with.x<- colnames(brfss.2015)[have.x]
+colnames(brfss.2015)[have.x] <- substring(names.with.x, 3, nchar(names.with.x))
+
+underscore.pattern <- "_$"
+
+have.underscore <- grepl(x = colnames(brfss.2015), pattern = underscore.pattern)
+
+names.with.us<- colnames(brfss.2015)[have.underscore]
+colnames(brfss.2015)[have.underscore] <- substring(names.with.us, 1, nchar(names.with.us)-1)
+
+```
+
+
+2. Change all covariates to lowercase
+```{r}
+colnames(brfss.2015)<- tolower(colnames(brfss.2015))
+
+```
+### Data Cleaning
+
+There are 330 Variables, it would take each person a long time to clean this all. 
+
+1. Loop through the columns to determine the amount of missing data. 
+```{r}
+nmissing<- 0 
+for (i in 1:ncol(brfss.2015)){
+
+  nmissing<- nmissing + sum(is.na(brfss.2015[,i]))
+}
+nmissing
+
+```
+2. If you loop through the rows do you find the same answer?
+```{r}
+nmissing<- 0 
+for (j in 1:nrow(brfss.2015)){
+
+  nmissing<- nmissing + sum(is.na(brfss.2015[j,]))
+}
+nmissing
+
+```
+
+3. Many times people refused to answer or did not know. Find out how these were coded. For now we can consider them `NA`. Change them to `NA`.  
+4. Redo the loop through columns to determine how much data is missing. 
+5. Run the random values below to find 10 variables that you will be assigned to clean. 
+```
+my_vars <- a <- ceiling(runif(10, min=25, max=330))
+```
+
+6. Go into the codebook and create value labels for the variables you have been assigned:
+
+```
+# variable v1 is coded 1, 2 or 3
+# we want to attach value labels 1=red, 2=blue, 3=green
+
+mydata$v1 <- factor(mydata$v1,
+levels = c(1,2,3),
+labels = c("red", "blue", "green"))
+```
