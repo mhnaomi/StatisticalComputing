@@ -262,13 +262,13 @@ This will give everyone a chance to explore a very large, messy and real data se
 
 1. Go to the webpage and download the SAS transport file. 
 2. Load this into R with:
-```
+```{r}
 library(foreign)
 setwd("C:/Users/Menghan Hu/Google Drive/Brown/Year3/PHP2560 Statistical Computing/Inclass Projects")
+# setwd("~/GoogleDrive/Brown/Year3/PHP2560 Statistical Computing/Inclass Projects")
 # This is where mine is stored, you will have to change in for yours. 
 brfss.2015 <- read.xport("LLCP2015.xpt")
 ```
-
 
 ### Initial Steps
 
@@ -320,8 +320,16 @@ for (j in 1:nrow(brfss.2015)){
 nmissing
 
 ```
+The answer is the same, but looping through the rows takes much more time.
 
 3. Many times people refused to answer or did not know. Find out how these were coded. For now we can consider them `NA`. Change them to `NA`.  
+```{r}
+
+
+
+```
+
+
 4. Redo the loop through columns to determine how much data is missing. 
 5. Run the random values below to find 10 variables that you will be assigned to clean. 
 ```
@@ -338,3 +346,4 @@ mydata$v1 <- factor(mydata$v1,
 levels = c(1,2,3),
 labels = c("red", "blue", "green"))
 ```
+

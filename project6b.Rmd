@@ -1,0 +1,176 @@
+---
+title: "Project 6: part b"
+author: "Liv King, Altan Allawala, Menghan Hu, Becca Wang"
+date: "April 14, 2016"
+output:
+  html_document
+---
+
+```{r setup, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(eval=FALSE)
+
+```
+
+<style type="text/css">
+.table {
+
+    width: 80%;
+    margin-left:10%; 
+    margin-right:10%;
+}
+</style>
+
+####[Lab 7 Markdown]()
+
+## Setup 
+
+For the setup of this, I have created a database called titanic. The goal will be to use this lab to work on the titanic dataset. The code below will let you connect to the database. 
+
+```{R}
+library(RMySQL)
+con <- dbConnect(MySQL(),
+                 user = 'trial',
+                 password = 'password',
+                 host = '127.0.0.1',
+                 dbname='titanic')
+```
+
+
+1. What tables are in this database?
+
+
+2. Load the titanic data:
+
+```{r}
+titanic <- read.table("/home/php2560/titanic.csv", header=TRUE, sep=",")
+```
+
+3. Create a table in MySQL from this data. Name it `titanic_yourlastname`:
+
+```{r}
+dbWriteTable(con, "titanic_king", titanic)
+```
+
+4. Now what tables are in this database?
+
+
+
+## Basic usage of commands
+
+We will start to use a list of commands that would be commonly used in MySQL:
+
+These are:
+
+- show tables;
+- describe titanic_yourlastname;
+- select name, pclass, age, sex from titanic limit 10;
+ 
+
+
+We can run any of these commands as follow:
+
+```
+query <- "show tables;"
+dbGetQuery(con, query)
+```
+
+Try these commands and test this out. 
+
+
+## R and MySQL
+
+5. Run the following SQL command. Before doing so describe what this is asking
+
+Pulling columns of passenger class, whether they survived, and their average age (which is renamed) from the table and then grouping by class and survival.
+
+```{r}
+query <- "select pclass, survived, avg(age) as avg_age from titanic_king   
+   group by pclass, survived;"
+dbGetQuery(con, query)
+
+```
+
+
+6.  Run the following SQL command. Before doing so describe what this is asking
+
+We are modifying the preexisting table to only display passengers who survived by passenger class.
+
+```{r}
+query <- "select pclass, survived, avg(age) as avg_age from titanic_king
+   where survived=1
+   group by pclass, survived;"
+dbGetQuery(con, query)
+```
+
+
+7. Run the following SQL command. Before doing so describe what this is asking
+
+We are selecting the columns name, passenger class, whether or not they survived, and age from titanic_king for those records where names that 1) have the three letters "sen" in the middle; 2) begin with any one character before "sen"; and 3) ends with at least another character. 
+
+```{r}
+query <-"select name, pclass, survived, age from titanic_king 
+   where name regexp '^.sen.+';"
+dbGetQuery(con, query)
+```
+
+8. Run the following SQL command. Before doing so describe what this is asking
+
+We are selecting the same columns for those records where the name begins with Jakob and may or may not have more letters after Jakob. 
+
+```{r}
+query <- "select name, pclass, survived, age from titanic_king 
+   where name regexp 'Jakob.*$';"
+dbGetQuery(con, query)
+```
+
+9.  Run the following SQL commands. What is different about them? What do they return?
+```{r}
+query <- "select name, pclass, survived, age from titanic_king 
+   where name regexp 'Ivar.*$';"
+  
+query2 <- "select name, pclass, survived, age from titanic_king 
+   where name regexp ',.*Ivar.*$';"
+
+dbGetQuery(con, query)
+dbGetQuery(con, query2)
+```
+The first query returns two names, one of which contains "ivar" as part of a longer name (Givard). The second query returns only one name, which has "Ivar" as a complete word and not within another. In reality, what the second query is doing is specifying that a comma must appear before the "Ivar" string, which means that it will only look within first names.
+
+10. We can also plot data from this:
+```{r}
+myQuery <- "select pclass, avg(fare) as avg_fare from titanic_king
+              group by pclass;"
+myData <- dbGetQuery(con, myQuery)
+library(ggplot2)
+ggplot(myData, aes(pclass, avg_fare)) + geom_bar(stat="identity")
+```
+
+
+
+## More challenging
+
+11. Create a data frame with:
+- `pclass`
+- `sex`
+- `age`
+- `fare`
+- `survived`
+- `parch`
+Only for people who did not survive. 
+
+```{r}
+query <- "select pclass, sex, age, fare, survived, parch from titanic_king where survived=0;"
+
+died <- dbGetQuery(con, query)
+```
+
+12. Create a graph of the average survival over the different classes. Make two distinct lines for male and female passengers. Create this plot using ggplot. 
+
+```{r}
+query <- 'select sex, pclass, avg(survived) as percent_survived from titanic_king
+group by sex, pclass;'
+
+survival <- dbGetQuery(con, query)
+
+ggplot(survival, aes(x = pclass, y = percent_survived, group = sex)) + geom_line(aes(colour = sex))
+```
